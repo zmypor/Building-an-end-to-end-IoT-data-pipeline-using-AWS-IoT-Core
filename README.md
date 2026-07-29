@@ -2,44 +2,45 @@ IoT devices generate data continuously. Temperature sensors, fleet trackers, ind
 
 This guide covers building an end-to-end IoT data pipeline using IoT Core for device connectivity, Kinesis for stream processing, Timestream for time-series storage, and Lambda for real-time alerting.
 
-***Architecture***
-<img width="865" height="774" alt="image" src="https://github.com/user-attachments/assets/bddaee3d-2692-4698-8bd3-4b00ee1b5aa7" />
+**Architecture**
+
+**![placeholder](https://markdowntoword.io/placeholder.png)**
 
 **Step 1: Set Up IoT Core**
 
 IoT Core is the MQTT broker that devices connect to. Each device needs a certificate for authentication:
 
-_\# Create an IoT Thing (device representation)_
+*# Create an IoT Thing (device representation)*
 
 aws iot create-thing --thing-name "sensor-001"
 
-_\# Create a certificate for the device_
+*# Create a certificate for the device*
 
-aws iot create-keys-and-certificate \\
+aws iot create-keys-and-certificate \
 
-\--set-as-active \\
+  --set-as-active \
 
-\--certificate-pem-outfile cert.pem \\
+  --certificate-pem-outfile cert.pem \
 
-\--public-key-outfile public.key \\
+  --public-key-outfile public.key \
 
-\--private-key-outfile private.key
+  --private-key-outfile private.key
 
-_\# Attach a policy to the certificate_
+*# Attach a policy to the certificate*
 
-aws iot attach-policy \\
+aws iot attach-policy \
 
-\--policy-name "SensorPolicy" \\
+  --policy-name "SensorPolicy" \
 
-\--target "arn:aws:iot:us-east-1:123456789:cert/abc123"
+  --target "arn:aws:iot:us-east-1:123456789:cert/abc123"
 
-_\# Attach the certificate to the thing_
+*# Attach the certificate to the thing*
 
-aws iot attach-thing-principal \\
+aws iot attach-thing-principal \
 
-\--thing-name "sensor-001" \\
+  --thing-name "sensor-001" \
 
-\--principal "arn:aws:iot:us-east-1:123456789:cert/abc123"
+  --principal "arn:aws:iot:us-east-1:123456789:cert/abc123"
 
 Create the IoT policy:
 
@@ -47,57 +48,57 @@ JSON
 
 {
 
-"Version": "2012-10-17",
+  "Version": "2012-10-17",
 
-"Statement": \[
+  "Statement": [
 
-{
+    {
 
-"Effect": "Allow",
+      "Effect": "Allow",
 
-"Action": "iot:Connect",
+      "Action": "iot:Connect",
 
-"Resource": "arn:aws:iot:us-east-1:123456789:client/${iot:Connection.Thing.ThingName}"
-
-},
-
-{
-
-"Effect": "Allow",
-
-"Action": "iot:Publish",
-
-"Resource": \[
-
-"arn:aws:iot:us-east-1:123456789:topic/devices/${iot:Connection.Thing.ThingName}/telemetry",
-
-"arn:aws:iot:us-east-1:123456789:topic/devices/${iot:Connection.Thing.ThingName}/status"
-
-\]
+      "Resource": "arn:aws:iot:us-east-1:123456789:client/${iot:Connection.Thing.ThingName}"
 
 },
 
-{
+    {
 
-"Effect": "Allow",
+      "Effect": "Allow",
 
-"Action": "iot:Subscribe",
+      "Action": "iot:Publish",
 
-"Resource": "arn:aws:iot:us-east-1:123456789:topicfilter/devices/${iot:Connection.Thing.ThingName}/commands"
+      "Resource": [
 
-},
+        "arn:aws:iot:us-east-1:123456789:topic/devices/${iot:Connection.Thing.ThingName}/telemetry",
 
-{
+        "arn:aws:iot:us-east-1:123456789:topic/devices/${iot:Connection.Thing.ThingName}/status"
 
-"Effect": "Allow",
+      ]
 
-"Action": "iot:Receive",
+    },
 
-"Resource": "arn:aws:iot:us-east-1:123456789:topic/devices/${iot:Connection.Thing.ThingName}/commands"
+    {
 
-}
+      "Effect": "Allow",
 
-\]
+      "Action": "iot:Subscribe",
+
+      "Resource": "arn:aws:iot:us-east-1:123456789:topicfilter/devices/${iot:Connection.Thing.ThingName}/commands"
+
+    },
+
+    {
+
+      "Effect": "Allow",
+
+      "Action": "iot:Receive",
+
+      "Resource": "arn:aws:iot:us-east-1:123456789:topic/devices/${iot:Connection.Thing.ThingName}/commands"
+
+    }
+
+  ]
 
 }
 
@@ -107,7 +108,7 @@ Here is a minimal device firmware example using MQTT to send telemetry data:
 
 PythonCopy
 
-_\# device_firmware.py - Minimal IoT device code_
+*# device_firmware.py - Minimal IoT device code*
 
 import json
 
@@ -117,7 +118,7 @@ import ssl
 
 from paho.mqtt import client as mqtt_client
 
-_\# Device configuration_
+*# Device configuration*
 
 DEVICE_ID = "sensor-001"
 
@@ -129,7 +130,7 @@ KEY_PATH = "/certs/private.key"
 
 CA_PATH = "/certs/AmazonRootCA1.pem"
 
-_\# MQTT topics_
+*# MQTT topics*
 
 TELEMETRY_TOPIC = f"devices/{DEVICE_ID}/telemetry"
 
@@ -139,77 +140,77 @@ COMMANDS_TOPIC = f"devices/{DEVICE_ID}/commands"
 
 def on_connect(client, userdata, flags, reason_code, properties):
 
-"""Called when device connects to IoT Core."""
+    """Called when device connects to IoT Core."""
 
-print(f"Connected with reason code {reason_code}")
+    print(f"Connected with reason code {reason_code}")
 
-_\# Subscribe to commands from the cloud_
+    *# Subscribe to commands from the cloud*
 
-client.subscribe(COMMANDS_TOPIC)
+    client.subscribe(COMMANDS_TOPIC)
 
-_\# Report online status_
+    *# Report online status*
 
-client.publish(STATUS_TOPIC, json.dumps({"status": "online", "timestamp": time.time()}))
+    client.publish(STATUS_TOPIC, json.dumps({"status": "online", "timestamp": time.time()}))
 
 def on_message(client, userdata, msg):
 
-"""Handle commands from the cloud."""
+    """Handle commands from the cloud."""
 
-command = json.loads(msg.payload)
+    command = json.loads(msg.payload)
 
-print(f"Received command: {command}")
+    print(f"Received command: {command}")
 
-if command.get("action") == "reboot":
+    if command.get("action") == "reboot":
 
-_\# Handle reboot command_
+        *# Handle reboot command*
 
-pass
+        pass
 
-elif command.get("action") == "update_interval":
+    elif command.get("action") == "update_interval":
 
-_\# Change reporting interval_
+        *# Change reporting interval*
 
-global reporting_interval
+        global reporting_interval
 
-reporting_interval = command.get("interval", 60)
+        reporting_interval = command.get("interval", 60)
 
 def read_sensor_data():
 
-"""Read data from sensors (simulated here)."""
+    """Read data from sensors (simulated here)."""
 
-import random
+    import random
 
-return {
+    return {
 
-"temperature": round(20 + random.uniform(-5, 10), 2),
+        "temperature": round(20 + random.uniform(-5, 10), 2),
 
-"humidity": round(50 + random.uniform(-20, 30), 2),
+        "humidity": round(50 + random.uniform(-20, 30), 2),
 
-"pressure": round(1013 + random.uniform(-10, 10), 2),
+        "pressure": round(1013 + random.uniform(-10, 10), 2),
 
-"battery_pct": round(random.uniform(20, 100), 1),
+        "battery_pct": round(random.uniform(20, 100), 1),
 
-}
+    }
 
-_\# Set up MQTT client with TLS_
+*# Set up MQTT client with TLS*
 
 client = mqtt_client.Client(
 
-callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
+    callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
 
-client_id=DEVICE_ID,
+    client_id=DEVICE_ID,
 
 )
 
 client.tls_set(
 
-ca_certs=CA_PATH,
+    ca_certs=CA_PATH,
 
-certfile=CERT_PATH,
+    certfile=CERT_PATH,
 
-keyfile=KEY_PATH,
+    keyfile=KEY_PATH,
 
-tls_version=ssl.PROTOCOL_TLSv1_2,
+    tls_version=ssl.PROTOCOL_TLSv1_2,
 
 )
 
@@ -217,125 +218,125 @@ client.on_connect = on_connect
 
 client.on_message = on_message
 
-_\# Connect and start the loop_
+*# Connect and start the loop*
 
 client.connect(IOT_ENDPOINT, 8883, keepalive=60)
 
 client.loop_start()
 
-reporting_interval = 60 _\# seconds_
+reporting_interval = 60  *# seconds*
 
-_\# Main telemetry loop_
+*# Main telemetry loop*
 
 while True:
 
-sensor_data = read_sensor_data()
+    sensor_data = read_sensor_data()
 
-payload = {
+    payload = {
 
-"deviceId": DEVICE_ID,
+        "deviceId": DEVICE_ID,
 
-"timestamp": int(time.time() \* 1000),
+        "timestamp": int(time.time() * 1000),
 
-"data": sensor_data,
+        "data": sensor_data,
 
-}
+    }
 
-client.publish(TELEMETRY_TOPIC, json.dumps(payload), qos=1)
+    client.publish(TELEMETRY_TOPIC, json.dumps(payload), qos=1)
 
-print(f"Published: {payload}")
+    print(f"Published: {payload}")
 
-time.sleep(reporting_interval)
+    time.sleep(reporting_interval)
 
 **Step 3: IoT Rules for Data Routing**
 
 IoT Rules Engine routes messages to different AWS services based on SQL-like queries:
 
-_\# Rule 1: Send all telemetry to Kinesis for processing_
+*# Rule 1: Send all telemetry to Kinesis for processing*
 
-aws iot create-topic-rule \\
+aws iot create-topic-rule \
 
-\--rule-name "TelemetryToKinesis" \\
+  --rule-name "TelemetryToKinesis" \
 
-\--topic-rule-payload '{
+  --topic-rule-payload '{
 
-"sql": "SELECT \* FROM '\\''devices/+/telemetry'\\''",
+    "sql": "SELECT * FROM '\''devices/+/telemetry'\''",
 
-"actions": \[{
+    "actions": [{
 
-"kinesis": {
+      "kinesis": {
 
-"streamName": "iot-telemetry",
+        "streamName": "iot-telemetry",
 
-"partitionKey": "${deviceId}",
+        "partitionKey": "${deviceId}",
 
-"roleArn": "arn:aws:iam::123456789:role/iot-rules-role"
+        "roleArn": "arn:aws:iam::123456789:role/iot-rules-role"
 
-}
+      }
 
-}\],
+    }],
 
-"ruleDisabled": false,
+    "ruleDisabled": false,
 
-"awsIotSqlVersion": "2016-03-23"
+    "awsIotSqlVersion": "2016-03-23"
 
-}'
+  }'
 
-_\# Rule 2: Alert on high temperature readings_
+*# Rule 2: Alert on high temperature readings*
 
-aws iot create-topic-rule \\
+aws iot create-topic-rule \
 
-\--rule-name "HighTemperatureAlert" \\
+  --rule-name "HighTemperatureAlert" \
 
-\--topic-rule-payload '{
+  --topic-rule-payload '{
 
-"sql": "SELECT \* FROM '\\''devices/+/telemetry'\\'' WHERE data.temperature > 40",
+    "sql": "SELECT * FROM '\''devices/+/telemetry'\'' WHERE data.temperature > 40",
 
-"actions": \[{
+    "actions": [{
 
-"lambda": {
+      "lambda": {
 
-"functionArn": "arn:aws:lambda:us-east-1:123456789:function:iot-alert-handler"
+        "functionArn": "arn:aws:lambda:us-east-1:123456789:function:iot-alert-handler"
 
-}
+      }
 
-}\],
+    }],
 
-"ruleDisabled": false,
+    "ruleDisabled": false,
 
-"awsIotSqlVersion": "2016-03-23"
+    "awsIotSqlVersion": "2016-03-23"
 
-}'
+  }'
 
-_\# Rule 3: Archive all raw messages to S3_
+*# Rule 3: Archive all raw messages to S3*
 
-aws iot create-topic-rule \\
+aws iot create-topic-rule \
 
-\--rule-name "ArchiveToS3" \\
+  --rule-name "ArchiveToS3" \
 
-\--topic-rule-payload '{
+  --topic-rule-payload '{
 
-"sql": "SELECT \* FROM '\\''devices/+/telemetry'\\''",
+    "sql": "SELECT * FROM '\''devices/+/telemetry'\''",
 
-"actions": \[{
+    "actions": [{
 
-"s3": {
+      "s3": {
 
-"bucketName": "iot-raw-archive",
+        "bucketName": "iot-raw-archive",
 
-"key": "${topic()}/${timestamp()}",
+        "key": "${topic()}/${timestamp()}",
 
-"roleArn": "arn:aws:iam::123456789:role/iot-rules-role"
+        "roleArn": "arn:aws:iam::123456789:role/iot-rules-role"
 
-}
+      }
 
-}\],
+    }],
 
-"ruleDisabled": false,
+    "ruleDisabled": false,
 
-"awsIotSqlVersion": "2016-03-23"
+    "awsIotSqlVersion": "2016-03-23"
 
-}'
+  }'
 
 **Step 4: Stream Processing**
 
@@ -343,7 +344,7 @@ The Lambda stream processor transforms and enriches IoT data before storing it:
 
 JavaScript
 
-_// stream-processor/handler.js - Process IoT telemetry from Kinesis_
+*// stream-processor/handler.js - Process IoT telemetry from Kinesis*
 
 const { TimestreamWriteClient, WriteRecordsCommand } = require('@aws-sdk/client-timestream-write');
 
@@ -357,111 +358,111 @@ const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 exports.handler = async (event) => {
 
-const timestreamRecords = \[\];
+  const timestreamRecords = [];
 
-const deviceUpdates = {};
+  const deviceUpdates = {};
 
-for (const record of event.Records) {
+  for (const record of event.Records) {
 
-const payload = JSON.parse(Buffer.from(record.kinesis.data, 'base64').toString());
+    const payload = JSON.parse(Buffer.from(record.kinesis.data, 'base64').toString());
 
-const { deviceId, timestamp, data } = payload;
+    const { deviceId, timestamp, data } = payload;
 
-_// Create Timestream records for each metric_
+    *// Create Timestream records for each metric*
 
-for (const \[metric, value\] of Object.entries(data)) {
+    for (const [metric, value] of Object.entries(data)) {
 
-timestreamRecords.push({
+      timestreamRecords.push({
 
-Dimensions: \[
+        Dimensions: [
 
-{ Name: 'device_id', Value: deviceId },
+          { Name: 'device_id', Value: deviceId },
 
-{ Name: 'metric', Value: metric },
+          { Name: 'metric', Value: metric },
 
-\],
+        ],
 
-MeasureName: metric,
+        MeasureName: metric,
 
-MeasureValue: String(value),
+        MeasureValue: String(value),
 
-MeasureValueType: 'DOUBLE',
+        MeasureValueType: 'DOUBLE',
 
-Time: String(timestamp),
+        Time: String(timestamp),
 
-TimeUnit: 'MILLISECONDS',
+        TimeUnit: 'MILLISECONDS',
 
-});
+      });
 
-}
+    }
 
-_// Track latest device state for quick access_
+    *// Track latest device state for quick access*
 
-deviceUpdates\[deviceId\] = {
+    deviceUpdates[deviceId] = {
 
-...data,
+      ...data,
 
-status: 'active',
+      status: 'active',
 
-lastSeen: new Date(timestamp).toISOString(),
+      lastSeen: new Date(timestamp).toISOString(),
 
-};
+    };
 
-}
+  }
 
-_// Write to Timestream in batches of 100_
+  *// Write to Timestream in batches of 100*
 
-for (let i = 0; i < timestreamRecords.length; i += 100) {
+  for (let i = 0; i < timestreamRecords.length; i += 100) {
 
-const batch = timestreamRecords.slice(i, i + 100);
+    const batch = timestreamRecords.slice(i, i + 100);
 
-await timestream.send(new WriteRecordsCommand({
+    await timestream.send(new WriteRecordsCommand({
 
-DatabaseName: process.env.TIMESTREAM_DATABASE,
+      DatabaseName: process.env.TIMESTREAM_DATABASE,
 
-TableName: process.env.TIMESTREAM_TABLE,
+      TableName: process.env.TIMESTREAM_TABLE,
 
-Records: batch,
+      Records: batch,
 
-}));
+    }));
 
-}
+  }
 
-_// Update device shadow/state in DynamoDB_
+  *// Update device shadow/state in DynamoDB*
 
-for (const \[deviceId, state\] of Object.entries(deviceUpdates)) {
+  for (const [deviceId, state] of Object.entries(deviceUpdates)) {
 
-await docClient.send(new UpdateCommand({
+    await docClient.send(new UpdateCommand({
 
-TableName: process.env.DEVICE_TABLE,
+      TableName: process.env.DEVICE_TABLE,
 
-Key: { PK: \`DEVICE#${deviceId}\`, SK: 'STATE' },
+      Key: { PK: `DEVICE#${deviceId}`, SK: 'STATE' },
 
-UpdateExpression: 'SET #data = :data, #status = :status, GSI1PK = :gsi1pk, lastSeen = :lastSeen',
+      UpdateExpression: 'SET #data = :data, #status = :status, GSI1PK = :gsi1pk, lastSeen = :lastSeen',
 
-ExpressionAttributeNames: {
+      ExpressionAttributeNames: {
 
-'#data': 'data',
+        '#data': 'data',
 
-'#status': 'status',
+        '#status': 'status',
 
-},
+      },
 
-ExpressionAttributeValues: {
+      ExpressionAttributeValues: {
 
-':data': state,
+        ':data': state,
 
-':status': state.status,
+        ':status': state.status,
 
-':gsi1pk': \`STATUS#${state.status}\`,
+        ':gsi1pk': `STATUS#${state.status}`,
 
-':lastSeen': state.lastSeen,
+        ':lastSeen': state.lastSeen,
 
-},
+      },
 
-}));
+    }));
 
-}
+  }
 
 };
 
@@ -471,7 +472,7 @@ Handle alerts when sensor readings exceed thresholds:
 
 JavaScript
 
-_// alert-handler/handler.js - Real-time IoT alerting_
+*// alert-handler/handler.js - Real-time IoT alerting*
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
@@ -483,79 +484,79 @@ const iotData = new IoTDataPlaneClient({});
 
 exports.handler = async (event) => {
 
-const { deviceId, data, timestamp } = event;
+  const { deviceId, data, timestamp } = event;
 
-_// Determine alert severity_
+  *// Determine alert severity*
 
-let severity = 'INFO';
+  let severity = 'INFO';
 
-let message = '';
+  let message = '';
 
-if (data.temperature > 50) {
+  if (data.temperature > 50) {
 
-severity = 'CRITICAL';
+    severity = 'CRITICAL';
 
-message = \`Device ${deviceId}: Temperature critically high at ${data.temperature} C\`;
+    message = `Device ${deviceId}: Temperature critically high at ${data.temperature} C`;
 
-} else if (data.temperature > 40) {
+  } else if (data.temperature > 40) {
 
-severity = 'WARNING';
+    severity = 'WARNING';
 
-message = \`Device ${deviceId}: Temperature elevated at ${data.temperature} C\`;
+    message = `Device ${deviceId}: Temperature elevated at ${data.temperature} C`;
 
-}
+  }
 
-if (data.battery_pct < 10) {
+  if (data.battery_pct < 10) {
 
-severity = 'WARNING';
+    severity = 'WARNING';
 
-message += \` | Battery critically low at ${data.battery_pct}%\`;
+    message += ` | Battery critically low at ${data.battery_pct}%`;
 
-}
+  }
 
-_// Send alert notification_
+  *// Send alert notification*
 
-await sns.send(new PublishCommand({
+  await sns.send(new PublishCommand({
 
-TopicArn: process.env.ALERT_TOPIC,
+    TopicArn: process.env.ALERT_TOPIC,
 
-Subject: \`IoT Alert \[${severity}\]: ${deviceId}\`,
+    Subject: `IoT Alert [${severity}]: ${deviceId}`,
 
-Message: JSON.stringify({
+    Message: JSON.stringify({
 
-severity,
+      severity,
 
-deviceId,
+      deviceId,
 
-message,
+      message,
 
-data,
+      data,
 
-timestamp: new Date(timestamp).toISOString(),
+      timestamp: new Date(timestamp).toISOString(),
 
-}),
+    }),
 
-}));
+  }));
 
-_// Optionally send a command back to the device_
+  *// Optionally send a command back to the device*
 
-if (severity === 'CRITICAL') {
+  if (severity === 'CRITICAL') {
 
-await iotData.send(new IoTPublishCommand({
+    await iotData.send(new IoTPublishCommand({
 
-topic: \`devices/${deviceId}/commands\`,
+      topic: `devices/${deviceId}/commands`,
 
-payload: JSON.stringify({
+      payload: JSON.stringify({
 
-action: 'enter_safe_mode',
+        action: 'enter_safe_mode',
 
-reason: 'Temperature exceeded critical threshold',
+        reason: 'Temperature exceeded critical threshold',
 
-}),
+      }),
 
-}));
+    }));
 
-}
+  }
 
 };
 
@@ -565,31 +566,31 @@ Query historical IoT data with Timestream:
 
 SQL
 
-_\-- Average temperature per device over the last 24 hours, grouped by hour_
+*-- Average temperature per device over the last 24 hours, grouped by hour*
 
 SELECT
 
-device_id,
+  device_id,
 
-BIN(time, 1h) as hour,
+  BIN(time, 1h) as hour,
 
-AVG(measure_value::double) as avg_temperature,
+  AVG(measure_value::double) as avg_temperature,
 
-MAX(measure_value::double) as max_temperature,
+  MAX(measure_value::double) as max_temperature,
 
-MIN(measure_value::double) as min_temperature
+  MIN(measure_value::double) as min_temperature
 
 FROM "iot-data"."telemetry"
 
 WHERE measure_name = 'temperature'
 
-AND time > ago(24h)
+  AND time > ago(24h)
 
 GROUP BY device_id, BIN(time, 1h)
 
 ORDER BY hour DESC
 
-_\-- Detect devices that have gone offline (no data in 10 minutes)_
+*-- Detect devices that have gone offline (no data in 10 minutes)*
 
 SELECT device_id, MAX(time) as last_seen
 
@@ -609,7 +610,7 @@ Expose device state through an API for management applications:
 
 JavaScript
 
-_// device-api/handler.js - Device management endpoints_
+*// device-api/handler.js - Device management endpoints*
 
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 
@@ -619,55 +620,55 @@ const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 exports.getDeviceStatus = async (event) => {
 
-const { deviceId } = event.pathParameters;
+  const { deviceId } = event.pathParameters;
 
-const state = await docClient.send(new GetCommand({
+  const state = await docClient.send(new GetCommand({
 
-TableName: process.env.DEVICE_TABLE,
+    TableName: process.env.DEVICE_TABLE,
 
-Key: { PK: \`DEVICE#${deviceId}\`, SK: 'STATE' },
+    Key: { PK: `DEVICE#${deviceId}`, SK: 'STATE' },
 
-}));
+  }));
 
-return {
+  return {
 
-statusCode: 200,
+    statusCode: 200,
 
-body: JSON.stringify(state.Item || { error: 'Device not found' }),
+    body: JSON.stringify(state.Item || { error: 'Device not found' }),
+
+  };
 
 };
 
-};
-
-_// List all devices with optional filtering_
+*// List all devices with optional filtering*
 
 exports.listDevices = async (event) => {
 
-const { status } = event.queryStringParameters || {};
+  const { status } = event.queryStringParameters || {};
 
-const result = await docClient.send(new QueryCommand({
+  const result = await docClient.send(new QueryCommand({
 
-TableName: process.env.DEVICE_TABLE,
+    TableName: process.env.DEVICE_TABLE,
 
-IndexName: 'StatusIndex',
+    IndexName: 'StatusIndex',
 
-KeyConditionExpression: 'GSI1PK = :status',
+    KeyConditionExpression: 'GSI1PK = :status',
 
-ExpressionAttributeValues: {
+    ExpressionAttributeValues: {
 
-':status': \`STATUS#${status || 'active'}\`,
+      ':status': `STATUS#${status || 'active'}`,
 
-},
+    },
 
-}));
+  }));
 
-return {
+  return {
 
-statusCode: 200,
+    statusCode: 200,
 
-body: JSON.stringify({ devices: result.Items }),
+    body: JSON.stringify({ devices: result.Items }),
 
-};
+  };
 
 };
 
@@ -678,6 +679,7 @@ body: JSON.stringify({ devices: result.Items }),
 - **Timestream**: Automatically scales storage and compute
 - **Lambda**: Set concurrency limits to prevent overwhelming downstream services
 
+For monitoring your IoT pipeline, see our guide on [**building a metrics collection system on AWS**](https://oneuptime.com/blog/post/2026-02-12-build-a-metrics-collection-system-on-aws/view).
 
 **Summary**
 
