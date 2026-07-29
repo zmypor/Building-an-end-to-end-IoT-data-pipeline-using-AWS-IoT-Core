@@ -26,7 +26,7 @@ aws iot attach-thing-principal \
   --thing-name "sensor-001" \
   --principal "arn:aws:iot:us-east-1:123456789:cert/abc123"
 Create the IoT policy:
-JSONCopy
+JSON
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -187,7 +187,7 @@ aws iot create-topic-rule \
   }'
 Step 4: Stream Processing
 The Lambda stream processor transforms and enriches IoT data before storing it:
-JAVASCRIPTCopy
+JAVASCRIPT
 // stream-processor/handler.js - Process IoT telemetry from Kinesis
 const { TimestreamWriteClient, WriteRecordsCommand } = require('@aws-sdk/client-timestream-write');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
@@ -258,7 +258,7 @@ exports.handler = async (event) => {
 };
 Step 5: Real-Time Alerting
 Handle alerts when sensor readings exceed thresholds:
-JAVASCRIPTCopy
+JAVASCRIPT
 // alert-handler/handler.js - Real-time IoT alerting
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 const { IoTDataPlaneClient, PublishCommand: IoTPublishCommand } = require('@aws-sdk/client-iot-data-plane');
@@ -312,7 +312,7 @@ exports.handler = async (event) => {
 };
 Step 6: Query and Visualize
 Query historical IoT data with Timestream:
-SQLCopy
+SQL
 -- Average temperature per device over the last 24 hours, grouped by hour
 SELECT
   device_id,
@@ -380,6 +380,7 @@ Scaling Considerations
 •	Timestream: Automatically scales storage and compute
 •	Lambda: Set concurrency limits to prevent overwhelming downstream services
 For monitoring your IoT pipeline, see our guide on building a metrics collection system on AWS.
-Wrapping Up
+
+Summary
 An IoT data pipeline on AWS turns raw device telemetry into operational intelligence. IoT Core handles the device connectivity, Kinesis handles the streaming ingestion, Timestream stores the time-series data efficiently, and Lambda ties everything together with real-time processing and alerting. Start with a few devices and a simple pipeline, then add complexity like anomaly detection, predictive maintenance, and device fleet management as your deployment grows.
 
