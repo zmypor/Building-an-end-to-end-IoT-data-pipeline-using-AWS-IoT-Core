@@ -680,6 +680,6 @@ exports.listDevices = async (event) => {
 - **Timestream**: Automatically scales storage and compute
 - **Lambda**: Set concurrency limits to prevent overwhelming downstream services
 
-                                                      **Summary**
+**Summary**
 
 An IoT data pipeline on AWS turns raw device telemetry into operational intelligence. IoT Core handles the device connectivity, Kinesis handles the streaming ingestion, Timestream stores the time-series data efficiently, and Lambda ties everything together with real-time processing and alerting. Start with a few devices and a simple pipeline, then add complexity like anomaly detection, predictive maintenance, and device fleet management as your deployment grows.
