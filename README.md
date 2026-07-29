@@ -138,6 +138,7 @@ while True:
     client.publish(TELEMETRY_TOPIC, json.dumps(payload), qos=1)
     print(f"Published: {payload}")
     time.sleep(reporting_interval)
+
 Step 3: IoT Rules for Data Routing
 IoT Rules Engine routes messages to different AWS services based on SQL-like queries:
 # Rule 1: Send all telemetry to Kinesis for processing
@@ -185,6 +186,7 @@ aws iot create-topic-rule \
     "ruleDisabled": false,
     "awsIotSqlVersion": "2016-03-23"
   }'
+
 Step 4: Stream Processing
 The Lambda stream processor transforms and enriches IoT data before storing it:
 JAVASCRIPT
