@@ -2,7 +2,8 @@ IoT devices generate data continuously. Temperature sensors, fleet trackers, ind
 
 This guide covers building an end-to-end IoT data pipeline using IoT Core for device connectivity, Kinesis for stream processing, Timestream for time-series storage, and Lambda for real-time alerting.
 
-**Architecture**
+***Architecture***
+<img width="865" height="774" alt="image" src="https://github.com/user-attachments/assets/bddaee3d-2692-4698-8bd3-4b00ee1b5aa7" />
 
 **Step 1: Set Up IoT Core**
 
@@ -677,7 +678,6 @@ body: JSON.stringify({ devices: result.Items }),
 - **Timestream**: Automatically scales storage and compute
 - **Lambda**: Set concurrency limits to prevent overwhelming downstream services
 
-For monitoring your IoT pipeline, see our guide on [**building a metrics collection system on AWS**](https://oneuptime.com/blog/post/2026-02-12-build-a-metrics-collection-system-on-aws/view).
 
 **Summary**
 
