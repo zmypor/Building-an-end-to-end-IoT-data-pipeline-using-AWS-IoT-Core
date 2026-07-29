@@ -4,7 +4,8 @@ This guide covers building an end-to-end IoT data pipeline using IoT Core for de
 
 **Architecture**
 
-**![placeholder](https://markdowntoword.io/placeholder.png)**
+<img width="865" height="774" alt="image" src="https://github.com/user-attachments/assets/46593c38-c4df-463c-a16c-2060feb94999" />
+
 
 **Step 1: Set Up IoT Core**
 
@@ -106,7 +107,7 @@ JSON
 
 Here is a minimal device firmware example using MQTT to send telemetry data:
 
-PythonCopy
+Python
 
 *# device_firmware.py - Minimal IoT device code*
 
@@ -679,8 +680,6 @@ exports.listDevices = async (event) => {
 - **Timestream**: Automatically scales storage and compute
 - **Lambda**: Set concurrency limits to prevent overwhelming downstream services
 
-For monitoring your IoT pipeline, see our guide on [**building a metrics collection system on AWS**](https://oneuptime.com/blog/post/2026-02-12-build-a-metrics-collection-system-on-aws/view).
-
-**Summary**
+                                                      **Summary**
 
 An IoT data pipeline on AWS turns raw device telemetry into operational intelligence. IoT Core handles the device connectivity, Kinesis handles the streaming ingestion, Timestream stores the time-series data efficiently, and Lambda ties everything together with real-time processing and alerting. Start with a few devices and a simple pipeline, then add complexity like anomaly detection, predictive maintenance, and device fleet management as your deployment grows.
