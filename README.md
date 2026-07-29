@@ -256,6 +256,8 @@ exports.handler = async (event) => {
     }));
   }
 };
+
+
 Step 5: Real-Time Alerting
 Handle alerts when sensor readings exceed thresholds:
 JAVASCRIPT
@@ -310,6 +312,7 @@ exports.handler = async (event) => {
     }));
   }
 };
+
 Step 6: Query and Visualize
 Query historical IoT data with Timestream:
 SQL
