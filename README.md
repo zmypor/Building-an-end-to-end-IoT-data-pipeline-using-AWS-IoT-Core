@@ -1,7 +1,8 @@
-IoT devices generate data continuously. Temperature sensors, fleet trackers, industrial machines, and smart home devices all need a reliable pipeline to ingest their data, process it in real time, store it for analysis, and trigger actions when thresholds are exceeded. AWS provides a purpose-built IoT stack that scales from a handful of devices to millions.
+<img width="714" height="639" alt="IoT" src="https://github.com/user-attachments/assets/d082c88f-a8d9-4791-a871-ff7ad1c046c2" />IoT devices generate data continuously. Temperature sensors, fleet trackers, industrial machines, and smart home devices all need a reliable pipeline to ingest their data, process it in real time, store it for analysis, and trigger actions when thresholds are exceeded. AWS provides a purpose-built IoT stack that scales from a handful of devices to millions.
 This guide covers building an end-to-end IoT data pipeline using IoT Core for device connectivity, Kinesis for stream processing, Timestream for time-series storage, and Lambda for real-time alerting.
 Architecture
-![img.png](img.png)
+<img width="714" height="639" alt="IoT" src="https://github.com/user-attachments/assets/3e75b33d-d6e0-49c4-86d1-0f6f24193ed4" />
+
 Step 1: Set Up IoT Core
 IoT Core is the MQTT broker that devices connect to. Each device needs a certificate for authentication:
 # Create an IoT Thing (device representation)
